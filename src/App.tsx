@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Anuncios from "./pages/Anuncios";
 import AnuncioDetalhe from "./pages/AnuncioDetalhe";
 import ComoFunciona from "./pages/ComoFunciona";
+import NovoAnuncio from "./pages/NovoAnuncio";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/anuncios" element={<Anuncios />} />
             <Route path="/anuncio/:id" element={<AnuncioDetalhe />} />
             <Route path="/como-funciona" element={<ComoFunciona />} />
+            <Route path="/novo-anuncio" element={<NovoAnuncio />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
