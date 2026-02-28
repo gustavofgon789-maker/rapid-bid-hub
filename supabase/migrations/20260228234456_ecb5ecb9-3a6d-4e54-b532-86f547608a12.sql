@@ -1,0 +1,1 @@
+ALTER TABLE public.lances ADD COLUMN mensagem text DEFAULT NULL;

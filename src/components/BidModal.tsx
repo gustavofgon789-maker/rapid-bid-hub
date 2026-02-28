@@ -30,6 +30,7 @@ const BidModal = ({ open, onOpenChange, anuncio, currentMax, userId, onSuccess }
   const [step, setStep] = useState<"warning" | "bid">("warning");
   const [accepted, setAccepted] = useState(false);
   const [valorCentavos, setValorCentavos] = useState(0);
+  const [mensagem, setMensagem] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -51,6 +52,7 @@ const BidModal = ({ open, onOpenChange, anuncio, currentMax, userId, onSuccess }
       setStep("warning");
       setAccepted(false);
       setValorCentavos(0);
+      setMensagem("");
     }
     onOpenChange(v);
   };
@@ -71,7 +73,8 @@ const BidModal = ({ open, onOpenChange, anuncio, currentMax, userId, onSuccess }
       anuncio_id: anuncio.id,
       comprador_id: userId,
       valor: numVal,
-    });
+      mensagem: mensagem.trim() || null,
+    } as any);
 
     if (error) {
       toast({
@@ -178,6 +181,22 @@ const BidModal = ({ open, onOpenChange, anuncio, currentMax, userId, onSuccess }
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   Mínimo: {formatCurrency(minValue)}
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="bid-message" className="text-xs">Proposta / Observação (opcional)</Label>
+                <textarea
+                  id="bid-message"
+                  placeholder="Ex: Te dou R$ 3.000 em dinheiro + um carro de menor valor..."
+                  value={mensagem}
+                  onChange={(e) => setMensagem(e.target.value)}
+                  maxLength={500}
+                  rows={3}
+                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Visível apenas para o dono do anúncio. Máx 500 caracteres.
                 </p>
               </div>
             </div>

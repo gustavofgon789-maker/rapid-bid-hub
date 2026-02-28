@@ -73,6 +73,7 @@ export type Database = {
           comprador_id: string
           created_at: string
           id: string
+          mensagem: string | null
           status: Database["public"]["Enums"]["lance_status"]
           valor: number
         }
@@ -81,6 +82,7 @@ export type Database = {
           comprador_id: string
           created_at?: string
           id?: string
+          mensagem?: string | null
           status?: Database["public"]["Enums"]["lance_status"]
           valor: number
         }
@@ -89,6 +91,7 @@ export type Database = {
           comprador_id?: string
           created_at?: string
           id?: string
+          mensagem?: string | null
           status?: Database["public"]["Enums"]["lance_status"]
           valor?: number
         }

@@ -310,6 +310,11 @@ const AnuncioDetalhe = () => {
                           <p className="text-xs text-muted-foreground">
                             {lance.profiles?.cidade}{lance.profiles?.estado ? `, ${lance.profiles.estado}` : ""}
                           </p>
+                          {isVendedor && (lance as any).mensagem && (
+                            <p className="text-xs text-foreground/80 mt-1 italic bg-muted/50 rounded px-2 py-1">
+                              💬 {(lance as any).mensagem}
+                            </p>
+                          )}
                         </div>
                       </div>
 
@@ -362,7 +367,7 @@ const AnuncioDetalhe = () => {
             {/* Timer */}
             <div className="glass rounded-xl p-5 space-y-3">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tempo Restante</h3>
-              <CountdownTimer endDate={new Date(anuncio.data_fim)} />
+              <CountdownTimer endDate={new Date(anuncio.data_fim)} stopped={!!aceito} />
             </div>
 
             {/* Vendedor info */}
@@ -404,11 +409,25 @@ const AnuncioDetalhe = () => {
             )}
 
             {aceito && (
-              <div className="glass rounded-xl p-5 text-center space-y-2">
+              <div className="glass rounded-xl p-5 text-center space-y-3">
                 <Badge className="bg-primary/20 text-primary border-primary/30">Proposta Aceita</Badge>
                 <p className="text-sm text-muted-foreground">
                   Este anúncio foi finalizado.
                 </p>
+                {isVendedor && aceito.profiles?.whatsapp && (
+                  <Button
+                    className="w-full"
+                    onClick={() => {
+                      const phone = aceito.profiles?.whatsapp?.replace(/\D/g, "") ?? "";
+                      const msg = encodeURIComponent(
+                        `Olá, vi seu lance no O Catireiro e aceitei sua oferta pelo ${anuncio.titulo}!`
+                      );
+                      window.open(`https://api.whatsapp.com/send?phone=55${phone}&text=${msg}`, "_blank");
+                    }}
+                  >
+                    💬 WhatsApp do Comprador
+                  </Button>
+                )}
               </div>
             )}
           </div>
