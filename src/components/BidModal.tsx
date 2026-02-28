@@ -29,7 +29,7 @@ interface BidModalProps {
 const BidModal = ({ open, onOpenChange, anuncio, currentMax, userId, onSuccess }: BidModalProps) => {
   const [step, setStep] = useState<"warning" | "bid">("warning");
   const [accepted, setAccepted] = useState(false);
-  const [valor, setValor] = useState("");
+  const [valorCentavos, setValorCentavos] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -38,18 +38,26 @@ const BidModal = ({ open, onOpenChange, anuncio, currentMax, userId, onSuccess }
   const formatCurrency = (v: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
+  const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, "");
+    setValorCentavos(parseInt(raw || "0", 10));
+  };
+
+  const valorReal = valorCentavos / 100;
+  const valorFormatado = formatCurrency(valorReal);
+
   const handleClose = (v: boolean) => {
     if (!v) {
       setStep("warning");
       setAccepted(false);
-      setValor("");
+      setValorCentavos(0);
     }
     onOpenChange(v);
   };
 
   const handleSubmitBid = async () => {
-    const numVal = parseFloat(valor.replace(",", "."));
-    if (isNaN(numVal) || numVal < minValue) {
+    const numVal = valorReal;
+    if (numVal < minValue) {
       toast({
         title: "Valor inválido",
         description: `O lance deve ser de pelo menos ${formatCurrency(minValue)}`,
@@ -161,12 +169,11 @@ const BidModal = ({ open, onOpenChange, anuncio, currentMax, userId, onSuccess }
                 <Label htmlFor="bid-value" className="text-xs">Seu lance (R$)</Label>
                 <Input
                   id="bid-value"
-                  type="number"
-                  step="0.01"
-                  min={minValue}
-                  placeholder={formatCurrency(minValue)}
-                  value={valor}
-                  onChange={(e) => setValor(e.target.value)}
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="R$ 0,00"
+                  value={valorCentavos > 0 ? valorFormatado : ""}
+                  onChange={handleValorChange}
                   className="mt-1 text-lg font-display font-bold"
                 />
                 <p className="text-xs text-muted-foreground mt-1">

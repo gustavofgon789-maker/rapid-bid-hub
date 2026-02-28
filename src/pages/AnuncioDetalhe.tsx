@@ -18,7 +18,9 @@ import {
   User,
   Calendar,
   DollarSign,
+  Trash2,
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Anuncio = Tables<"anuncios">;
@@ -41,6 +43,7 @@ const AnuncioDetalhe = () => {
   const [bidModalOpen, setBidModalOpen] = useState(false);
   const [acceptModalOpen, setAcceptModalOpen] = useState(false);
   const [selectedLance, setSelectedLance] = useState<LanceWithProfile | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -116,6 +119,21 @@ const AnuncioDetalhe = () => {
       .eq("anuncio_id", id!)
       .order("valor", { ascending: false });
     setLances((data as LanceWithProfile[]) ?? []);
+  };
+
+  const handleDeleteLance = async (lanceId: string) => {
+    const { error } = await supabase.from("lances").delete().eq("id", lanceId);
+    if (error) {
+      toast({ title: "Erro ao apagar lance", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Lance apagado com sucesso" });
+      const { data } = await supabase
+        .from("lances")
+        .select("*, profiles!lances_comprador_id_fkey(*)")
+        .eq("anuncio_id", id!)
+        .order("valor", { ascending: false });
+      setLances((data as LanceWithProfile[]) ?? []);
+    }
   };
 
   const handleAcceptBid = (lance: LanceWithProfile) => {
@@ -309,6 +327,17 @@ const AnuncioDetalhe = () => {
                             </Badge>
                           )}
                         </div>
+
+                        {lance.comprador_id === currentUserId && anuncio.status !== "finalizado" && lance.status !== "aceito" && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-destructive hover:bg-destructive/10"
+                            onClick={() => handleDeleteLance(lance.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
 
                         {isVendedor && anuncio.status !== "finalizado" && lance.status !== "aceito" && (
                           <Button
