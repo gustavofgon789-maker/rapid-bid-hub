@@ -4,14 +4,16 @@ import { Clock } from "lucide-react";
 interface CountdownTimerProps {
   endDate: Date;
   compact?: boolean;
+  stopped?: boolean;
 }
 
-const CountdownTimer = ({ endDate, compact = false }: CountdownTimerProps) => {
+const CountdownTimer = ({ endDate, compact = false, stopped = false }: CountdownTimerProps) => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isUrgent, setIsUrgent] = useState(false);
   const [isExpired, setIsExpired] = useState(false);
 
   useEffect(() => {
+    if (stopped) return;
     const timer = setInterval(() => {
       const now = new Date().getTime();
       const end = endDate.getTime();
@@ -33,7 +35,16 @@ const CountdownTimer = ({ endDate, compact = false }: CountdownTimerProps) => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [endDate]);
+  }, [endDate, stopped]);
+
+  if (stopped) {
+    return (
+      <div className="flex items-center gap-1.5 text-muted-foreground">
+        <Clock className="w-3.5 h-3.5" />
+        <span className="text-xs font-semibold uppercase tracking-wider">Finalizado</span>
+      </div>
+    );
+  }
 
   if (isExpired) {
     return (
