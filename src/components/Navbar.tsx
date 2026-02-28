@@ -1,10 +1,12 @@
 import { Link } from "react-router-dom";
-import { Flame, Menu, X, LogIn, UserPlus } from "lucide-react";
+import { Flame, Menu, X, LogIn, UserPlus, LayoutDashboard, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/30">
@@ -26,14 +28,25 @@ const Navbar = () => {
           <Link to="/como-funciona" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Como Funciona
           </Link>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/auth"><LogIn className="w-4 h-4 mr-1.5" />Entrar</Link>
-            </Button>
-            <Button size="sm" asChild>
-              <Link to="/auth?tab=register"><UserPlus className="w-4 h-4 mr-1.5" />Cadastrar</Link>
-            </Button>
-          </div>
+          {user ? (
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/dashboard"><LayoutDashboard className="w-4 h-4 mr-1.5" />Painel</Link>
+              </Button>
+              <Button variant="outline" size="sm" onClick={signOut}>
+                <LogOut className="w-4 h-4 mr-1.5" />Sair
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/auth"><LogIn className="w-4 h-4 mr-1.5" />Entrar</Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link to="/auth?tab=register"><UserPlus className="w-4 h-4 mr-1.5" />Cadastrar</Link>
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Mobile */}
@@ -50,14 +63,25 @@ const Navbar = () => {
           <Link to="/como-funciona" className="block text-sm text-muted-foreground hover:text-foreground" onClick={() => setMenuOpen(false)}>
             Como Funciona
           </Link>
-          <div className="flex gap-2 pt-2">
-            <Button variant="ghost" size="sm" asChild className="flex-1">
-              <Link to="/auth" onClick={() => setMenuOpen(false)}><LogIn className="w-4 h-4 mr-1.5" />Entrar</Link>
-            </Button>
-            <Button size="sm" asChild className="flex-1">
-              <Link to="/auth?tab=register" onClick={() => setMenuOpen(false)}><UserPlus className="w-4 h-4 mr-1.5" />Cadastrar</Link>
-            </Button>
-          </div>
+          {user ? (
+            <div className="flex gap-2 pt-2">
+              <Button variant="ghost" size="sm" asChild className="flex-1">
+                <Link to="/dashboard" onClick={() => setMenuOpen(false)}><LayoutDashboard className="w-4 h-4 mr-1.5" />Painel</Link>
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1" onClick={() => { signOut(); setMenuOpen(false); }}>
+                <LogOut className="w-4 h-4 mr-1.5" />Sair
+              </Button>
+            </div>
+          ) : (
+            <div className="flex gap-2 pt-2">
+              <Button variant="ghost" size="sm" asChild className="flex-1">
+                <Link to="/auth" onClick={() => setMenuOpen(false)}><LogIn className="w-4 h-4 mr-1.5" />Entrar</Link>
+              </Button>
+              <Button size="sm" asChild className="flex-1">
+                <Link to="/auth?tab=register" onClick={() => setMenuOpen(false)}><UserPlus className="w-4 h-4 mr-1.5" />Cadastrar</Link>
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </nav>
