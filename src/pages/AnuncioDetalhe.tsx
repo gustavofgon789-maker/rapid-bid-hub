@@ -125,9 +125,9 @@ const AnuncioDetalhe = () => {
   const handleDeleteLance = async (lanceId: string) => {
     const { error } = await supabase.from("lances").delete().eq("id", lanceId);
     if (error) {
-      toast({ title: "Erro ao apagar lance", description: error.message, variant: "destructive" });
+      toast({ title: "Erro ao apagar proposta", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Lance apagado com sucesso" });
+      toast({ title: "Proposta apagada com sucesso" });
       const { data } = await supabase
         .from("lances")
         .select("*, profiles!lances_comprador_id_fkey(*)")
@@ -158,7 +158,7 @@ const AnuncioDetalhe = () => {
     // Redirect to WhatsApp
     const phone = selectedLance.profiles?.whatsapp?.replace(/\D/g, "") ?? "";
     const msg = encodeURIComponent(
-      `Olá, vi seu lance no O Catireiro e aceitei sua oferta pelo ${anuncio.titulo}!`
+      `Olá, vi sua proposta no O Catireiro e aceitei sua oferta pelo ${anuncio.titulo}!`
     );
     window.open(`https://api.whatsapp.com/send?phone=55${phone}&text=${msg}`, "_blank");
 
@@ -263,7 +263,7 @@ const AnuncioDetalhe = () => {
                 </div>
                 <div className="space-y-1">
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <TrendingUp className="w-3 h-3" /> Maior Lance
+                    <TrendingUp className="w-3 h-3" /> Maior Proposta
                   </span>
                   <span className="font-display font-bold text-primary">
                     {maxLance ? formatCurrency(maxLance) : "—"}
@@ -271,7 +271,7 @@ const AnuncioDetalhe = () => {
                 </div>
                 <div className="space-y-1">
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Gavel className="w-3 h-3" /> Lances
+                    <Gavel className="w-3 h-3" /> Propostas
                   </span>
                   <span className="font-display font-bold">{lances.length}</span>
                 </div>
@@ -287,12 +287,12 @@ const AnuncioDetalhe = () => {
             {/* Bids list */}
             <div className="glass rounded-xl p-6">
               <h2 className="font-display text-lg font-bold mb-4 flex items-center gap-2">
-                <Gavel className="w-5 h-5 text-primary" /> Lances Recebidos
+                <Gavel className="w-5 h-5 text-primary" /> Propostas Recebidas
               </h2>
 
               {lances.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
-                  Nenhum lance ainda. Seja o primeiro!
+                  Nenhuma proposta ainda. Seja o primeiro!
                 </p>
               ) : (
                 <div className="space-y-3">
@@ -335,17 +335,17 @@ const AnuncioDetalhe = () => {
                             {formatCurrency(lance.valor)}
                           </span>
                           {lance.status === "aceito" && (
-                            <Badge className="ml-2 bg-primary/20 text-primary border-primary/30">Aceito</Badge>
-                          )}
-                          {aceito && lance.status !== "aceito" && (
-                            <Badge variant="outline" className="ml-2 border-destructive/30 text-destructive text-[10px]">
-                              Não Aceito
-                            </Badge>
-                          )}
-                          {!aceito && lance.status === "pendente" && (
-                            <Badge variant="outline" className="ml-2 border-muted-foreground/30 text-muted-foreground text-[10px]">
-                              Pendente
-                            </Badge>
+                              <Badge className="ml-2 bg-primary/20 text-primary border-primary/30">Proposta Aceita</Badge>
+                            )}
+                            {aceito && lance.status !== "aceito" && (
+                              <Badge variant="outline" className="ml-2 border-destructive/30 text-destructive text-[10px]">
+                                Não Aceita
+                              </Badge>
+                            )}
+                            {!aceito && lance.status === "pendente" && (
+                              <Badge variant="outline" className="ml-2 border-muted-foreground/30 text-muted-foreground text-[10px]">
+                                Pendente
+                              </Badge>
                           )}
                           {!aceito && i === 0 && (
                             <Badge variant="outline" className="ml-2 border-accent/30 text-accent text-[10px]">
@@ -372,7 +372,7 @@ const AnuncioDetalhe = () => {
                             className="border-primary/30 text-primary hover:bg-primary/10"
                             onClick={() => handleAcceptBid(lance)}
                           >
-                            Aceitar
+                            Aceitar Proposta
                           </Button>
                         )}
                       </div>
@@ -425,7 +425,7 @@ const AnuncioDetalhe = () => {
                   setBidModalOpen(true);
                 }}
               >
-                <Gavel className="w-4 h-4 mr-2" /> Dar Lance
+                <Gavel className="w-4 h-4 mr-2" /> Fazer Proposta
               </Button>
             )}
 
@@ -441,8 +441,8 @@ const AnuncioDetalhe = () => {
                     onClick={() => {
                       const phone = aceito.profiles?.whatsapp?.replace(/\D/g, "") ?? "";
                       const msg = encodeURIComponent(
-                        `Olá, vi seu lance no O Catireiro e aceitei sua oferta pelo ${anuncio.titulo}!`
-                      );
+                         `Olá, vi sua proposta no O Catireiro e aceitei sua oferta pelo ${anuncio.titulo}!`
+                       );
                       window.open(`https://api.whatsapp.com/send?phone=55${phone}&text=${msg}`, "_blank");
                     }}
                   >

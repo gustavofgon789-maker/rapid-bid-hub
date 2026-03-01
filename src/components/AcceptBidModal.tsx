@@ -36,7 +36,7 @@ const AcceptBidModal = ({ open, onOpenChange, lance, anuncioTitulo, onConfirm }:
           <AlertDialogDescription asChild>
             <div className="space-y-3 text-sm">
               <p className="text-foreground font-medium">
-                Você está aceitando o lance de{" "}
+                Você está aceitando a proposta de{" "}
                 <span className="text-primary font-bold">{formatCurrency(lance.valor)}</span> de{" "}
                 <span className="font-semibold">{lance.profiles?.nome_completo ?? "Comprador"}</span>{" "}
                 pelo item <span className="font-semibold">{anuncioTitulo}</span>.
@@ -72,7 +72,7 @@ const AcceptBidModal = ({ open, onOpenChange, lance, anuncioTitulo, onConfirm }:
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <Button onClick={onConfirm}>
-            Aceitar e Ir ao WhatsApp
+            Aceitar Proposta e Ir ao WhatsApp
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

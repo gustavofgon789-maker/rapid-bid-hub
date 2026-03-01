@@ -72,7 +72,7 @@ const ListingCard = ({
           <div className="flex items-end justify-between">
             <div>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
-                {maior_lance ? "Maior Lance" : "Preço Mínimo"}
+                {maior_lance ? "Maior Proposta" : "Preço Mínimo"}
               </p>
               <p className="font-display font-bold text-lg text-primary">
                 {formatCurrency(maior_lance || preco_minimo)}
@@ -81,7 +81,7 @@ const ListingCard = ({
             {total_lances > 0 && (
               <div className="flex items-center gap-1 text-muted-foreground">
                 <TrendingUp className="w-3.5 h-3.5" />
-                <span className="text-xs font-medium">{total_lances} lance{total_lances !== 1 ? "s" : ""}</span>
+                <span className="text-xs font-medium">{total_lances} proposta{total_lances !== 1 ? "s" : ""}</span>
               </div>
             )}
           </div>

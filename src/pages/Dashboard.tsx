@@ -103,8 +103,8 @@ const Dashboard = () => {
   };
 
   const lanceStatusConfig: Record<string, { label: string; className: string }> = {
-    pendente: { label: "Pendente", className: "bg-accent/20 text-accent border-accent/30" },
-    aceito: { label: "Aceito!", className: "bg-primary/20 text-primary border-primary/30" },
+    pendente: { label: "Pendente", className: "bg-muted text-muted-foreground border-border" },
+    aceito: { label: "Proposta Aceita", className: "bg-primary/20 text-primary border-primary/30" },
   };
 
   return (
@@ -194,15 +194,15 @@ const Dashboard = () => {
                               </span>
                             )}
                             <span className="flex items-center gap-1">
-                              <Gavel className="w-3.5 h-3.5" /> {anuncio.lances.length} lance{anuncio.lances.length !== 1 ? "s" : ""}
+                              <Gavel className="w-3.5 h-3.5" /> {anuncio.lances.length} proposta{anuncio.lances.length !== 1 ? "s" : ""}
                             </span>
                           </div>
                         </div>
                         <div className="text-right shrink-0">
-                          <CountdownTimer endDate={new Date(anuncio.data_fim)} compact />
+                          <CountdownTimer endDate={new Date(anuncio.data_fim)} compact stopped={!!aceito} />
                           <Button variant="outline" size="sm" className="mt-2" asChild>
                             <Link to={`/anuncio/${anuncio.id}`}>
-                              <Eye className="w-3.5 h-3.5 mr-1" /> Ver Lances
+                              <Eye className="w-3.5 h-3.5 mr-1" /> Ver Propostas
                             </Link>
                           </Button>
                         </div>
@@ -212,7 +212,7 @@ const Dashboard = () => {
                       {anuncio.lances.length > 0 && (
                         <div className="mt-4 pt-4 border-t border-border/30 space-y-2">
                           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                            Lances Recebidos
+                            Propostas Recebidas
                           </p>
                           {anuncio.lances
                             .sort((a, b) => b.valor - a.valor)
@@ -263,7 +263,10 @@ const Dashboard = () => {
               <div className="space-y-4">
                 {meusLances.map((lance) => {
                   const anuncio = lance.anuncios;
-                  const lst = lanceStatusConfig[lance.status] ?? lanceStatusConfig.pendente;
+                  const isNaoAceita = lance.status !== "aceito" && anuncio.status === "finalizado";
+                  const lst = isNaoAceita
+                    ? { label: "Não Aceita", className: "border-destructive/30 text-destructive" }
+                    : (lanceStatusConfig[lance.status] ?? lanceStatusConfig.pendente);
                   const anuncioSt = statusConfig[anuncio.status] ?? statusConfig.ativo;
 
                   return (
@@ -292,7 +295,7 @@ const Dashboard = () => {
                           </div>
                         </div>
                         <div className="text-right shrink-0">
-                          <p className="text-xs text-muted-foreground mb-1">Seu lance</p>
+                          <p className="text-xs text-muted-foreground mb-1">Sua proposta</p>
                           <p className="font-display font-bold text-xl text-primary">
                             {formatCurrency(lance.valor)}
                           </p>
