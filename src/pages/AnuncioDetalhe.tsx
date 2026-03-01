@@ -19,6 +19,7 @@ import {
   Calendar,
   DollarSign,
   Trash2,
+  Pencil,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
@@ -227,6 +228,16 @@ const AnuncioDetalhe = () => {
                   </div>
                   <h1 className="font-display text-2xl md:text-3xl font-bold">{anuncio.titulo}</h1>
                 </div>
+                {isVendedor && anuncio.status !== "finalizado" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0 gap-1.5"
+                    onClick={() => navigate(`/editar-anuncio/${anuncio.id}`)}
+                  >
+                    <Pencil className="w-3.5 h-3.5" /> Editar
+                  </Button>
+                )}
               </div>
 
               {anuncio.descricao && (
@@ -326,7 +337,17 @@ const AnuncioDetalhe = () => {
                           {lance.status === "aceito" && (
                             <Badge className="ml-2 bg-primary/20 text-primary border-primary/30">Aceito</Badge>
                           )}
-                          {i === 0 && lance.status !== "aceito" && (
+                          {aceito && lance.status !== "aceito" && (
+                            <Badge variant="outline" className="ml-2 border-destructive/30 text-destructive text-[10px]">
+                              Não Aceito
+                            </Badge>
+                          )}
+                          {!aceito && lance.status === "pendente" && (
+                            <Badge variant="outline" className="ml-2 border-muted-foreground/30 text-muted-foreground text-[10px]">
+                              Pendente
+                            </Badge>
+                          )}
+                          {!aceito && i === 0 && (
                             <Badge variant="outline" className="ml-2 border-accent/30 text-accent text-[10px]">
                               Maior
                             </Badge>
