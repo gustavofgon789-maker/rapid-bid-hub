@@ -41,6 +41,7 @@ const CountdownTimer = ({ endDate, compact = false, stopped = false }: Countdown
     return (
       <div className="flex items-center gap-1.5 text-muted-foreground">
         <Clock className="w-3.5 h-3.5" />
+        <span className="text-xs font-medium tabular-nums">00d 00:00:00</span>
         <span className="text-xs font-semibold uppercase tracking-wider">Finalizado</span>
       </div>
     );

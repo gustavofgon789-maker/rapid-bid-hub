@@ -62,7 +62,7 @@ const BidModal = ({ open, onOpenChange, anuncio, currentMax, userId, onSuccess }
     if (numVal < minValue) {
       toast({
         title: "Valor inválido",
-        description: `O lance deve ser de pelo menos ${formatCurrency(minValue)}`,
+        description: `A proposta deve ser de pelo menos ${formatCurrency(minValue)}`,
         variant: "destructive",
       });
       return;
@@ -78,12 +78,12 @@ const BidModal = ({ open, onOpenChange, anuncio, currentMax, userId, onSuccess }
 
     if (error) {
       toast({
-        title: "Erro ao dar lance",
+        title: "Erro ao enviar proposta",
         description: error.message,
         variant: "destructive",
       });
     } else {
-      toast({ title: "Lance registrado!", description: `Seu lance de ${formatCurrency(numVal)} foi enviado.` });
+      toast({ title: "Proposta enviada!", description: `Sua proposta de ${formatCurrency(numVal)} foi enviada.` });
       onSuccess();
     }
     setSubmitting(false);
@@ -148,9 +148,9 @@ const BidModal = ({ open, onOpenChange, anuncio, currentMax, userId, onSuccess }
         ) : (
           <>
             <AlertDialogHeader>
-              <AlertDialogTitle className="font-display text-lg">Dar Lance</AlertDialogTitle>
+              <AlertDialogTitle className="font-display text-lg">Fazer Proposta</AlertDialogTitle>
               <AlertDialogDescription>
-                Informe o valor do seu lance para <strong>{anuncio.titulo}</strong>.
+                Informe o valor da sua proposta para <strong>{anuncio.titulo}</strong>.
               </AlertDialogDescription>
             </AlertDialogHeader>
 
@@ -162,14 +162,14 @@ const BidModal = ({ open, onOpenChange, anuncio, currentMax, userId, onSuccess }
                 </div>
                 {currentMax && (
                   <div>
-                    <span className="text-muted-foreground">Maior lance:</span>{" "}
+                    <span className="text-muted-foreground">Maior proposta:</span>{" "}
                     <span className="font-semibold text-accent">{formatCurrency(currentMax)}</span>
                   </div>
                 )}
               </div>
 
               <div>
-                <Label htmlFor="bid-value" className="text-xs">Seu lance (R$)</Label>
+                <Label htmlFor="bid-value" className="text-xs">Sua proposta (R$)</Label>
                 <Input
                   id="bid-value"
                   type="text"
@@ -204,7 +204,7 @@ const BidModal = ({ open, onOpenChange, anuncio, currentMax, userId, onSuccess }
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
               <Button onClick={handleSubmitBid} disabled={submitting}>
-                {submitting ? "Enviando..." : "Confirmar Lance"}
+                {submitting ? "Enviando..." : "Confirmar Proposta"}
               </Button>
             </AlertDialogFooter>
           </>

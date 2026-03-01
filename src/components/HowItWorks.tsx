@@ -9,12 +9,12 @@ const steps = [
   {
     icon: Timer,
     title: "Timer ativado",
-    desc: "O anúncio entra no ar com contagem regressiva. Compradores veem e dão lances.",
+    desc: "O anúncio entra no ar com contagem regressiva. Compradores veem e fazem propostas.",
   },
   {
     icon: Gavel,
     title: "Escolha a proposta",
-    desc: "Quando o timer zerar, escolha qualquer lance — não precisa ser o maior.",
+    desc: "Quando o timer zerar, escolha qualquer proposta — não precisa ser a maior.",
   },
   {
     icon: MessageSquare,
