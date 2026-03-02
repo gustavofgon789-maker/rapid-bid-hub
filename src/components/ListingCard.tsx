@@ -17,6 +17,7 @@ interface ListingCardProps {
 
 const categoryIcons: Record<string, string> = {
   "Celulares": "📱",
+  "Móveis": "🛋️",
   "Carros": "🚗",
   "Caminhões": "🚛",
   "Motos": "🏍️",

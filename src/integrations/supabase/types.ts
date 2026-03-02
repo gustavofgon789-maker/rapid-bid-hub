@@ -160,7 +160,13 @@ export type Database = {
     }
     Enums: {
       anuncio_status: "ativo" | "aguardando_escolha" | "finalizado"
-      categoria_tipo: "Celulares" | "Carros" | "Caminhões" | "Motos" | "Outros"
+      categoria_tipo:
+        | "Celulares"
+        | "Carros"
+        | "Caminhões"
+        | "Motos"
+        | "Outros"
+        | "Móveis"
       lance_status: "pendente" | "aceito"
     }
     CompositeTypes: {
@@ -290,7 +296,14 @@ export const Constants = {
   public: {
     Enums: {
       anuncio_status: ["ativo", "aguardando_escolha", "finalizado"],
-      categoria_tipo: ["Celulares", "Carros", "Caminhões", "Motos", "Outros"],
+      categoria_tipo: [
+        "Celulares",
+        "Carros",
+        "Caminhões",
+        "Motos",
+        "Outros",
+        "Móveis",
+      ],
       lance_status: ["pendente", "aceito"],
     },
   },

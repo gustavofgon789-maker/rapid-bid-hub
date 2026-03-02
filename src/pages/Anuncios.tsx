@@ -6,10 +6,11 @@ import Footer from "@/components/Footer";
 import ListingCard from "@/components/ListingCard";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Smartphone, Car, Truck, Bike, Package, Search, MapPin, Flame, Clock, ArrowDownUp } from "lucide-react";
+import { Smartphone, Car, Truck, Bike, Package, Search, MapPin, Flame, Clock, ArrowDownUp, Sofa } from "lucide-react";
 
 const categories = [
   { name: "Celulares", icon: Smartphone, soon: false },
+  { name: "Móveis", icon: Sofa, soon: false },
   { name: "Carros", icon: Car, soon: true },
   { name: "Caminhões", icon: Truck, soon: true },
   { name: "Motos", icon: Bike, soon: true },

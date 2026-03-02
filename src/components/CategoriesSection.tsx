@@ -1,8 +1,9 @@
-import { Smartphone, Car, Truck, Bike, Package } from "lucide-react";
+import { Smartphone, Car, Truck, Bike, Package, Sofa } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const categories = [
   { name: "Celulares", icon: Smartphone, soon: false },
+  { name: "Móveis", icon: Sofa, soon: false },
   { name: "Carros", icon: Car, soon: true },
   { name: "Caminhões", icon: Truck, soon: true },
   { name: "Motos", icon: Bike, soon: true },
