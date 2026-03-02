@@ -19,7 +19,10 @@ import { toast } from "sonner";
 import { ArrowLeft, Pencil } from "lucide-react";
 import { Constants } from "@/integrations/supabase/types";
 
-const categorias = Constants.public.Enums.categoria_tipo;
+const soonCategories = ["Carros", "Caminhões", "Motos"];
+const categorias = Constants.public.Enums.categoria_tipo.filter(
+  (c) => !soonCategories.includes(c)
+);
 
 const EditarAnuncio = () => {
   const { user, loading: authLoading } = useAuth();
