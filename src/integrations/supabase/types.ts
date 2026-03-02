@@ -159,7 +159,11 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      anuncio_status: "ativo" | "aguardando_escolha" | "finalizado"
+      anuncio_status:
+        | "ativo"
+        | "aguardando_escolha"
+        | "finalizado"
+        | "cancelado"
       categoria_tipo:
         | "Celulares"
         | "Carros"
@@ -167,7 +171,16 @@ export type Database = {
         | "Motos"
         | "Outros"
         | "Móveis"
-      lance_status: "pendente" | "aceito"
+      lance_status:
+        | "pendente"
+        | "aceito"
+        | "recusado"
+        | "aguardando_pagamento"
+        | "pago"
+        | "enviado"
+        | "recebido"
+        | "finalizado"
+        | "cancelado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -295,7 +308,12 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      anuncio_status: ["ativo", "aguardando_escolha", "finalizado"],
+      anuncio_status: [
+        "ativo",
+        "aguardando_escolha",
+        "finalizado",
+        "cancelado",
+      ],
       categoria_tipo: [
         "Celulares",
         "Carros",
@@ -304,7 +322,17 @@ export const Constants = {
         "Outros",
         "Móveis",
       ],
-      lance_status: ["pendente", "aceito"],
+      lance_status: [
+        "pendente",
+        "aceito",
+        "recusado",
+        "aguardando_pagamento",
+        "pago",
+        "enviado",
+        "recebido",
+        "finalizado",
+        "cancelado",
+      ],
     },
   },
 } as const
