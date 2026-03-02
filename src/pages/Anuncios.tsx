@@ -9,11 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Smartphone, Car, Truck, Bike, Package, Search, MapPin, Flame, Clock, ArrowDownUp } from "lucide-react";
 
 const categories = [
-  { name: "Celulares", icon: Smartphone },
-  { name: "Carros", icon: Car },
-  { name: "Caminhões", icon: Truck },
-  { name: "Motos", icon: Bike },
-  { name: "Outros", icon: Package },
+  { name: "Celulares", icon: Smartphone, soon: false },
+  { name: "Carros", icon: Car, soon: true },
+  { name: "Caminhões", icon: Truck, soon: true },
+  { name: "Motos", icon: Bike, soon: true },
+  { name: "Outros", icon: Package, soon: false },
 ];
 
 type SortOption = "recentes" | "urgentes" | "menor_preco" | "maior_preco";
@@ -150,15 +150,16 @@ const Anuncios = () => {
             >
               Todos
             </Badge>
-            {categories.map(({ name, icon: Icon }) => (
+            {categories.map(({ name, icon: Icon, soon }) => (
               <Badge
                 key={name}
                 variant={activeCategory === name ? "default" : "secondary"}
-                className="cursor-pointer text-sm px-4 py-1.5 gap-1.5"
-                onClick={() => setSearchParams({ categoria: name })}
+                className={`text-sm px-4 py-1.5 gap-1.5 ${soon ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}
+                onClick={() => !soon && setSearchParams({ categoria: name })}
               >
                 <Icon className="w-3.5 h-3.5" />
                 {name}
+                {soon && <span className="text-[10px] font-bold ml-1">EM BREVE</span>}
               </Badge>
             ))}
           </div>
