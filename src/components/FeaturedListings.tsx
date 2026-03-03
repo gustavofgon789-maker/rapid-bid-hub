@@ -10,22 +10,26 @@ const FeaturedListings = () => {
     const fetchListings = async () => {
       const { data } = await supabase
         .from("anuncios")
-        .select("*, profiles!anuncios_vendedor_id_fkey(cidade, estado), lances(valor)")
+        .select("*, profiles!anuncios_vendedor_id_fkey(cidade, estado), lances(valor), anuncio_imagens(url, ordem)")
         .eq("status", "ativo")
         .order("data_fim", { ascending: true })
         .limit(6);
 
-      const mapped = (data ?? []).map((a: any) => ({
-        id: a.id,
-        titulo: a.titulo,
-        categoria: a.categoria,
-        preco_minimo: a.preco_minimo,
-        maior_lance: a.lances?.length > 0 ? Math.max(...a.lances.map((l: any) => l.valor)) : undefined,
-        total_lances: a.lances?.length ?? 0,
-        localizacao: a.profiles ? `${a.profiles.cidade}, ${a.profiles.estado}` : "Brasil",
-        data_fim: new Date(a.data_fim),
-        motivo_urgencia: a.motivo_urgencia,
-      }));
+      const mapped = (data ?? []).map((a: any) => {
+        const sortedImgs = (a.anuncio_imagens ?? []).sort((x: any, y: any) => x.ordem - y.ordem);
+        return {
+          id: a.id,
+          titulo: a.titulo,
+          categoria: a.categoria,
+          preco_minimo: a.preco_minimo,
+          maior_lance: a.lances?.length > 0 ? Math.max(...a.lances.map((l: any) => l.valor)) : undefined,
+          total_lances: a.lances?.length ?? 0,
+          localizacao: a.profiles ? `${a.profiles.cidade}, ${a.profiles.estado}` : "Brasil",
+          data_fim: new Date(a.data_fim),
+          motivo_urgencia: a.motivo_urgencia,
+          imagem_url: sortedImgs[0]?.url,
+        };
+      });
 
       setListings(mapped);
       setLoading(false);

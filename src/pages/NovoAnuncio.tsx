@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ImageUpload from "@/components/ImageUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +36,8 @@ const NovoAnuncio = () => {
   const [duracaoDias, setDuracaoDias] = useState("7");
   const [motivoUrgencia, setMotivoUrgencia] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [createdId, setCreatedId] = useState<string | null>(null);
+  const [images, setImages] = useState<{ id: string; url: string; ordem: number }[]>([]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -66,7 +69,7 @@ const NovoAnuncio = () => {
       const dataFim = new Date();
       dataFim.setDate(dataFim.getDate() + dias);
 
-      const { error } = await supabase.from("anuncios").insert({
+      const { data, error } = await supabase.from("anuncios").insert({
         vendedor_id: user.id,
         titulo: titulo.trim(),
         descricao: descricao.trim() || null,
@@ -75,15 +78,17 @@ const NovoAnuncio = () => {
         duracao_dias: dias,
         data_fim: dataFim.toISOString(),
         motivo_urgencia: motivoUrgencia.trim() || null,
-      });
+      }).select().single();
 
       if (error) {
         toast.error(error.message);
         return;
       }
 
-      toast.success("Anúncio criado com sucesso!");
-      navigate("/dashboard");
+      if (data) {
+        setCreatedId(data.id);
+        toast.success("Anúncio criado! Agora adicione fotos se desejar.");
+      }
     } catch (err) {
       console.error("Erro ao criar anúncio:", err);
       toast.error("Erro inesperado. Tente novamente.");
@@ -121,100 +126,130 @@ const NovoAnuncio = () => {
               <Megaphone className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h1 className="font-display text-2xl font-bold">Novo Anúncio</h1>
+              <h1 className="font-display text-2xl font-bold">
+                {createdId ? "Adicionar Fotos" : "Novo Anúncio"}
+              </h1>
               <p className="text-muted-foreground text-sm">
-                Preencha os detalhes para criar seu anúncio
+                {createdId
+                  ? "Envie fotos do seu produto (opcional)"
+                  : "Preencha os detalhes para criar seu anúncio"}
               </p>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="titulo">Título *</Label>
-              <Input
-                id="titulo"
-                placeholder="Ex: iPhone 15 Pro Max 256GB"
-                value={titulo}
-                onChange={(e) => setTitulo(e.target.value)}
-                required
+          {createdId ? (
+            <div className="space-y-5">
+              <ImageUpload
+                anuncioId={createdId}
+                userId={user!.id}
+                images={images}
+                onImagesChange={setImages}
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="descricao">Descrição</Label>
-              <Textarea
-                id="descricao"
-                placeholder="Descreva o produto ou serviço em detalhes..."
-                value={descricao}
-                onChange={(e) => setDescricao(e.target.value)}
-                rows={4}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="categoria">Categoria</Label>
-                <Select value={categoria} onValueChange={setCategoria}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categorias.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => navigate(`/anuncio/${createdId}`)}
+                >
+                  Pular
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={() => navigate(`/anuncio/${createdId}`)}
+                >
+                  Concluir
+                </Button>
               </div>
-
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="preco">Preço Mínimo (R$) *</Label>
+                <Label htmlFor="titulo">Título *</Label>
                 <Input
-                  id="preco"
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  placeholder="0,00"
-                  value={precoMinimo}
-                  onChange={(e) => setPrecoMinimo(e.target.value)}
+                  id="titulo"
+                  placeholder="Ex: iPhone 15 Pro Max 256GB"
+                  value={titulo}
+                  onChange={(e) => setTitulo(e.target.value)}
                   required
                 />
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="duracao">Duração (dias)</Label>
-                <Select value={duracaoDias} onValueChange={setDuracaoDias}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[1, 3, 5, 7, 14, 21, 30].map((d) => (
-                      <SelectItem key={d} value={String(d)}>
-                        {d} dia{d !== 1 ? "s" : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
 
               <div className="space-y-2">
-                <Label htmlFor="urgencia">Motivo de Urgência</Label>
-                <Input
-                  id="urgencia"
-                  placeholder="Ex: Preciso vender até sexta"
-                  value={motivoUrgencia}
-                  onChange={(e) => setMotivoUrgencia(e.target.value)}
+                <Label htmlFor="descricao">Descrição</Label>
+                <Textarea
+                  id="descricao"
+                  placeholder="Descreva o produto ou serviço em detalhes..."
+                  value={descricao}
+                  onChange={(e) => setDescricao(e.target.value)}
+                  rows={4}
                 />
               </div>
-            </div>
 
-            <Button type="submit" className="w-full" disabled={submitting}>
-              {submitting ? "Criando..." : "Criar Anúncio"}
-            </Button>
-          </form>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="categoria">Categoria</Label>
+                  <Select value={categoria} onValueChange={setCategoria}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categorias.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="preco">Preço Mínimo (R$) *</Label>
+                  <Input
+                    id="preco"
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    placeholder="0,00"
+                    value={precoMinimo}
+                    onChange={(e) => setPrecoMinimo(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="duracao">Duração (dias)</Label>
+                  <Select value={duracaoDias} onValueChange={setDuracaoDias}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1, 3, 5, 7, 14, 21, 30].map((d) => (
+                        <SelectItem key={d} value={String(d)}>
+                          {d} dia{d !== 1 ? "s" : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="urgencia">Motivo de Urgência</Label>
+                  <Input
+                    id="urgencia"
+                    placeholder="Ex: Preciso vender até sexta"
+                    value={motivoUrgencia}
+                    onChange={(e) => setMotivoUrgencia(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full" disabled={submitting}>
+                {submitting ? "Criando..." : "Criar Anúncio"}
+              </Button>
+            </form>
+          )}
         </div>
       </main>
       <Footer />

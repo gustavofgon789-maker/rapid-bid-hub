@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ImageUpload from "@/components/ImageUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +37,7 @@ const EditarAnuncio = () => {
   const [motivoUrgencia, setMotivoUrgencia] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [images, setImages] = useState<{ id: string; url: string; ordem: number }[]>([]);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -69,6 +71,15 @@ const EditarAnuncio = () => {
       setCategoria(data.categoria);
       setPrecoMinimo(String(data.preco_minimo));
       setMotivoUrgencia(data.motivo_urgencia ?? "");
+
+      // Fetch images
+      const { data: imgs } = await supabase
+        .from("anuncio_imagens")
+        .select("*")
+        .eq("anuncio_id", id)
+        .order("ordem");
+      setImages((imgs ?? []).map((i: any) => ({ id: i.id, url: i.url, ordem: i.ordem })));
+
       setLoading(false);
     };
 
@@ -173,6 +184,17 @@ const EditarAnuncio = () => {
                 value={descricao}
                 onChange={(e) => setDescricao(e.target.value)}
                 rows={4}
+              />
+            </div>
+
+            {/* Image upload */}
+            <div className="space-y-2">
+              <Label>Fotos do Produto</Label>
+              <ImageUpload
+                anuncioId={id!}
+                userId={user!.id}
+                images={images}
+                onImagesChange={setImages}
               />
             </div>
 
