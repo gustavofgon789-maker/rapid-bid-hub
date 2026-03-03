@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      anuncio_imagens: {
+        Row: {
+          anuncio_id: string
+          created_at: string
+          id: string
+          ordem: number
+          url: string
+        }
+        Insert: {
+          anuncio_id: string
+          created_at?: string
+          id?: string
+          ordem?: number
+          url: string
+        }
+        Update: {
+          anuncio_id?: string
+          created_at?: string
+          id?: string
+          ordem?: number
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anuncio_imagens_anuncio_id_fkey"
+            columns: ["anuncio_id"]
+            isOneToOne: false
+            referencedRelation: "anuncios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       anuncios: {
         Row: {
           categoria: Database["public"]["Enums"]["categoria_tipo"]

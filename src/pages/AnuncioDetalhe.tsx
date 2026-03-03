@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import CountdownTimer from "@/components/CountdownTimer";
 import BidModal from "@/components/BidModal";
 import AcceptBidModal from "@/components/AcceptBidModal";
+import ImageGallery from "@/components/ImageGallery";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -44,6 +45,7 @@ const AnuncioDetalhe = () => {
   const [bidModalOpen, setBidModalOpen] = useState(false);
   const [acceptModalOpen, setAcceptModalOpen] = useState(false);
   const [selectedLance, setSelectedLance] = useState<LanceWithProfile | null>(null);
+  const [anuncioImages, setAnuncioImages] = useState<{ id: string; url: string }[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -64,6 +66,14 @@ const AnuncioDetalhe = () => {
         return;
       }
       setAnuncio(anuncioData);
+
+      // Fetch images
+      const { data: imgData } = await supabase
+        .from("anuncio_imagens")
+        .select("id, url")
+        .eq("anuncio_id", anuncioData.id)
+        .order("ordem");
+      setAnuncioImages(imgData ?? []);
 
       const { data: vendedorData } = await supabase
         .from("profiles")
@@ -211,8 +221,11 @@ const AnuncioDetalhe = () => {
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main info */}
+           {/* Main info */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Image gallery */}
+            <ImageGallery images={anuncioImages} />
+
             {/* Header card */}
             <div className="glass rounded-xl p-6 space-y-4">
               <div className="flex items-start justify-between gap-4">
