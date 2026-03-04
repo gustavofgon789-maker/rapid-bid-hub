@@ -3,10 +3,12 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
+import DashboardPageHeader from "@/components/DashboardPageHeader";
+import DashboardEmptyState from "@/components/DashboardEmptyState";
 import { Badge } from "@/components/ui/badge";
-import { Eye } from "lucide-react";
+import { Eye, Gavel } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { lanceStatusConfig, anuncioStatusConfig, formatCurrency } from "@/lib/statusConfig";
+import { lanceStatusConfig, formatCurrency } from "@/lib/statusConfig";
 
 const PropostasEnviadas = () => {
   const { user } = useAuth();
@@ -30,14 +32,21 @@ const PropostasEnviadas = () => {
 
   return (
     <DashboardLayout>
-      <h1 className="font-display text-2xl font-bold mb-6">Propostas Enviadas</h1>
+      <DashboardPageHeader
+        title="Propostas Enviadas"
+        description="Acompanhe suas propostas pendentes"
+        icon={<Gavel className="w-5 h-5 text-primary" />}
+      />
 
       {loading ? (
-        <p className="text-muted-foreground">Carregando...</p>
+        <div className="space-y-3">{[1, 2].map(i => <div key={i} className="h-20 rounded-xl bg-muted/30 animate-pulse" />)}</div>
       ) : lances.length === 0 ? (
-        <div className="glass rounded-xl p-12 text-center text-muted-foreground">
-          Nenhuma proposta pendente.
-        </div>
+        <DashboardEmptyState
+          icon={<Gavel className="w-8 h-8 text-muted-foreground/50" />}
+          title="Nenhuma proposta pendente"
+          description="Explore os anúncios e faça sua primeira oferta!"
+          action={<Button asChild><Link to="/anuncios">Ver Anúncios</Link></Button>}
+        />
       ) : (
         <div className="space-y-3">
           {lances.map((l) => {
@@ -46,9 +55,8 @@ const PropostasEnviadas = () => {
             const st = isRejected
               ? { label: "Não Aceita", className: "bg-destructive/20 text-destructive border-destructive/30" }
               : (lanceStatusConfig[l.status] ?? lanceStatusConfig.pendente);
-
             return (
-              <div key={l.id} className="glass rounded-xl p-4 flex items-center justify-between gap-4">
+              <div key={l.id} className="glass rounded-2xl p-4 md:p-5 flex items-center justify-between gap-4 card-hover">
                 <div className="min-w-0">
                   <Link to={`/anuncio/${l.anuncio_id}`} className="font-medium text-sm hover:text-primary truncate block">{l.anuncios?.titulo}</Link>
                   <p className="text-xs text-muted-foreground">Vendedor: {l.anuncios?.profiles?.nome_completo ?? "—"}</p>
@@ -56,9 +64,7 @@ const PropostasEnviadas = () => {
                 <div className="flex items-center gap-3 shrink-0">
                   <span className="font-display font-bold text-primary">{formatCurrency(l.valor)}</span>
                   <Badge variant="outline" className={st.className}>{st.label}</Badge>
-                  <Button variant="outline" size="sm" asChild>
-                    <Link to={`/anuncio/${l.anuncio_id}`}><Eye className="w-3.5 h-3.5" /></Link>
-                  </Button>
+                  <Button variant="outline" size="sm" asChild><Link to={`/anuncio/${l.anuncio_id}`}><Eye className="w-3.5 h-3.5" /></Link></Button>
                 </div>
               </div>
             );
