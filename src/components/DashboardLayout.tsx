@@ -35,12 +35,14 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <SidebarProvider>
           <div className="min-h-[calc(100vh-4rem)] flex w-full">
             <DashboardSidebar />
-            <div className="flex-1 flex flex-col">
-              <header className="h-12 flex items-center border-b border-border/30 px-4">
+            <div className="flex-1 flex flex-col min-w-0">
+              <header className="h-12 flex items-center border-b border-border/30 px-4 bg-card/30 backdrop-blur-sm">
                 <SidebarTrigger />
               </header>
-              <main className="flex-1 p-4 md:p-6 overflow-y-auto">
-                {children}
+              <main className="flex-1 overflow-y-auto">
+                <div className="w-full max-w-4xl mx-auto px-4 md:px-8 py-6 md:py-8">
+                  {children}
+                </div>
               </main>
             </div>
           </div>

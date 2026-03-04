@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/components/DashboardLayout";
+import DashboardPageHeader from "@/components/DashboardPageHeader";
+import DashboardEmptyState from "@/components/DashboardEmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, MessageSquare, CheckCircle } from "lucide-react";
@@ -31,12 +33,8 @@ const ComprasAndamento = () => {
 
   const updateStatus = async (lanceId: string, newStatus: string) => {
     const { error } = await supabase.from("lances").update({ status: newStatus as any }).eq("id", lanceId);
-    if (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Status atualizado!" });
-      fetchData();
-    }
+    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); }
+    else { toast({ title: "Status atualizado!" }); fetchData(); }
   };
 
   const nextAction = (status: string, lanceId: string, lance: any) => {
@@ -48,39 +46,33 @@ const ComprasAndamento = () => {
           <div className="flex gap-2">
             <Button size="sm" variant="outline" asChild>
               <a href={`https://api.whatsapp.com/send?phone=55${phone}&text=${encodeURIComponent("Olá! Vou realizar o pagamento pelo produto do O Catireiro.")}`} target="_blank" rel="noopener noreferrer">
-                <MessageSquare className="w-3.5 h-3.5 mr-1" /> Pagar via WhatsApp
+                <MessageSquare className="w-3.5 h-3.5 mr-1" /> WhatsApp
               </a>
             </Button>
             <Button size="sm" onClick={() => updateStatus(lanceId, "pago")}>Confirmar Pagamento</Button>
           </div>
         );
       }
-      case "pago":
-        return <Badge variant="outline" className="text-xs">Aguardando envio</Badge>;
-      case "enviado":
-        return <Button size="sm" onClick={() => updateStatus(lanceId, "recebido")}><CheckCircle className="w-3.5 h-3.5 mr-1" /> Confirmar Recebimento</Button>;
-      default:
-        return null;
+      case "pago": return <Badge variant="outline" className="text-xs">Aguardando envio</Badge>;
+      case "enviado": return <Button size="sm" onClick={() => updateStatus(lanceId, "recebido")}><CheckCircle className="w-3.5 h-3.5 mr-1" /> Confirmar Recebimento</Button>;
+      default: return null;
     }
   };
 
   return (
     <DashboardLayout>
-      <h1 className="font-display text-2xl font-bold mb-6">Compras em Andamento</h1>
+      <DashboardPageHeader title="Compras em Andamento" description="Acompanhe suas compras" icon={<ShoppingCart className="w-5 h-5 text-primary" />} />
 
       {loading ? (
-        <p className="text-muted-foreground">Carregando...</p>
+        <div className="space-y-3">{[1, 2].map(i => <div key={i} className="h-24 rounded-xl bg-muted/30 animate-pulse" />)}</div>
       ) : lances.length === 0 ? (
-        <div className="glass rounded-xl p-12 text-center text-muted-foreground">
-          <ShoppingCart className="w-10 h-10 mx-auto mb-3 opacity-50" />
-          Nenhuma compra em andamento.
-        </div>
+        <DashboardEmptyState icon={<ShoppingCart className="w-8 h-8 text-muted-foreground/50" />} title="Nenhuma compra em andamento" />
       ) : (
         <div className="space-y-3">
           {lances.map((l) => {
             const st = lanceStatusConfig[l.status] ?? lanceStatusConfig.pendente;
             return (
-              <div key={l.id} className="glass rounded-xl p-4 space-y-3">
+              <div key={l.id} className="glass rounded-2xl p-4 md:p-5 space-y-3 card-hover">
                 <div className="flex items-center justify-between gap-4">
                   <div className="min-w-0">
                     <Link to={`/anuncio/${l.anuncio_id}`} className="font-medium text-sm hover:text-primary truncate block">{l.anuncios?.titulo}</Link>
@@ -91,9 +83,7 @@ const ComprasAndamento = () => {
                     <Badge variant="outline" className={st.className}>{st.label}</Badge>
                   </div>
                 </div>
-                <div className="flex justify-end">
-                  {nextAction(l.status, l.id, l)}
-                </div>
+                <div className="flex justify-end">{nextAction(l.status, l.id, l)}</div>
               </div>
             );
           })}
