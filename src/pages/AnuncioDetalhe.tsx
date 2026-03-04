@@ -21,7 +21,19 @@ import {
   DollarSign,
   Trash2,
   Pencil,
+  XCircle,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -152,6 +164,38 @@ const AnuncioDetalhe = () => {
     setAcceptModalOpen(true);
   };
 
+  const handleCancelAnuncio = async () => {
+    if (!anuncio || !currentUserId) return;
+
+    // Notify all bidders before cancelling
+    if (lances.length > 0) {
+      const uniqueBidders = [...new Set(lances.map(l => l.comprador_id))];
+      const notifications = uniqueBidders.map(bidderId => ({
+        user_id: bidderId,
+        titulo: "Anúncio cancelado",
+        mensagem: `O anúncio "${anuncio.titulo}" foi cancelado pelo vendedor.`,
+        tipo: "cancelamento",
+        link: null,
+      }));
+      await supabase.from("notificacoes").insert(notifications);
+    }
+
+    // Update status to cancelado
+    const { error } = await supabase
+      .from("anuncios")
+      .update({ status: "cancelado" as any })
+      .eq("id", anuncio.id);
+
+    if (error) {
+      toast({ title: "Erro ao cancelar anúncio", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    toast({ title: "Anúncio cancelado", description: "Todos os interessados foram notificados." });
+    const { data: updated } = await supabase.from("anuncios").select("*").eq("id", anuncio.id).single();
+    if (updated) setAnuncio(updated);
+  };
+
   const handleAcceptConfirm = async () => {
     if (!selectedLance || !anuncio) return;
 
@@ -204,6 +248,7 @@ const AnuncioDetalhe = () => {
     ativo: { label: "Ativo", className: "bg-primary/20 text-primary border-primary/30" },
     aguardando_escolha: { label: "Escolha Obrigatória", className: "bg-accent/20 text-accent border-accent/30 animate-pulse-urgency" },
     finalizado: { label: "Finalizado", className: "bg-muted text-muted-foreground border-border" },
+    cancelado: { label: "Cancelado", className: "bg-destructive/20 text-destructive border-destructive/30" },
   };
 
   const status = statusConfig[anuncio.status] ?? statusConfig.ativo;
@@ -241,15 +286,45 @@ const AnuncioDetalhe = () => {
                   </div>
                   <h1 className="font-display text-2xl md:text-3xl font-bold">{anuncio.titulo}</h1>
                 </div>
-                {isVendedor && anuncio.status !== "finalizado" && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="shrink-0 gap-1.5"
-                    onClick={() => navigate(`/editar-anuncio/${anuncio.id}`)}
-                  >
-                    <Pencil className="w-3.5 h-3.5" /> Editar
-                  </Button>
+                {isVendedor && anuncio.status !== "finalizado" && anuncio.status !== "cancelado" && (
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => navigate(`/editar-anuncio/${anuncio.id}`)}
+                    >
+                      <Pencil className="w-3.5 h-3.5" /> Editar
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/10"
+                        >
+                          <XCircle className="w-3.5 h-3.5" /> Cancelar
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Cancelar anúncio?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Tem certeza que deseja cancelar este anúncio? Todos os compradores que fizeram propostas serão notificados sobre o cancelamento. Esta ação não pode ser desfeita.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Voltar</AlertDialogCancel>
+                          <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={handleCancelAnuncio}
+                          >
+                            Sim, cancelar anúncio
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 )}
               </div>
 
@@ -426,7 +501,7 @@ const AnuncioDetalhe = () => {
             )}
 
             {/* Bid button */}
-            {!isVendedor && anuncio.status !== "finalizado" && !aceito && (
+            {!isVendedor && anuncio.status !== "finalizado" && anuncio.status !== "cancelado" && !aceito && (
               <Button
                 className="w-full"
                 size="lg"

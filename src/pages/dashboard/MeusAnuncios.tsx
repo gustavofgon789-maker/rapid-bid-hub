@@ -6,13 +6,26 @@ import DashboardLayout from "@/components/DashboardLayout";
 import CountdownTimer from "@/components/CountdownTimer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Eye, DollarSign, TrendingUp, Gavel } from "lucide-react";
+import { Plus, Eye, DollarSign, TrendingUp, Gavel, XCircle } from "lucide-react";
 import { anuncioStatusConfig, formatCurrency } from "@/lib/statusConfig";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const DashboardMeusAnuncios = () => {
   const { user } = useAuth();
   const [anuncios, setAnuncios] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!user) return;
@@ -27,6 +40,38 @@ const DashboardMeusAnuncios = () => {
     };
     fetch();
   }, [user]);
+
+  const handleCancelAnuncio = async (anuncioId: string, titulo: string) => {
+    // Get bidders
+    const { data: lances } = await supabase
+      .from("lances")
+      .select("comprador_id")
+      .eq("anuncio_id", anuncioId);
+
+    if (lances && lances.length > 0) {
+      const uniqueBidders = [...new Set(lances.map(l => l.comprador_id))];
+      const notifications = uniqueBidders.map(bidderId => ({
+        user_id: bidderId,
+        titulo: "Anúncio cancelado",
+        mensagem: `O anúncio "${titulo}" foi cancelado pelo vendedor.`,
+        tipo: "cancelamento",
+      }));
+      await supabase.from("notificacoes").insert(notifications);
+    }
+
+    const { error } = await supabase
+      .from("anuncios")
+      .update({ status: "cancelado" as any })
+      .eq("id", anuncioId);
+
+    if (error) {
+      toast({ title: "Erro ao cancelar", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    toast({ title: "Anúncio cancelado", description: "Interessados foram notificados." });
+    setAnuncios(prev => prev.map(a => a.id === anuncioId ? { ...a, status: "cancelado" } : a));
+  };
 
   return (
     <DashboardLayout>
@@ -73,6 +118,32 @@ const DashboardMeusAnuncios = () => {
                     <Button variant="outline" size="sm" className="mt-2" asChild>
                       <Link to={`/anuncio/${a.id}`}><Eye className="w-3.5 h-3.5 mr-1" /> Ver</Link>
                     </Button>
+                    {a.status !== "finalizado" && a.status !== "cancelado" && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="mt-2 border-destructive/30 text-destructive hover:bg-destructive/10">
+                            <XCircle className="w-3.5 h-3.5 mr-1" /> Cancelar
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Cancelar anúncio?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza? Todos os compradores que fizeram propostas serão notificados.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Voltar</AlertDialogCancel>
+                            <AlertDialogAction
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              onClick={() => handleCancelAnuncio(a.id, a.titulo)}
+                            >
+                              Sim, cancelar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                   </div>
                 </div>
               </div>

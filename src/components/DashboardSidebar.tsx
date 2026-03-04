@@ -9,6 +9,7 @@ import {
   Package,
   Truck,
   ClipboardList,
+  Bell,
 } from "lucide-react";
 import {
   Sidebar,
@@ -39,6 +40,7 @@ const buyerItems = [
 ];
 
 const configItems = [
+  { title: "Notificações", url: "/dashboard/notificacoes", icon: Bell },
   { title: "Configurações", url: "/dashboard/configuracoes", icon: Settings },
 ];
 

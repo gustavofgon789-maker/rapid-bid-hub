@@ -24,6 +24,7 @@ import ComprasAndamento from "./pages/dashboard/ComprasAndamento";
 import ComprasConcluidas from "./pages/dashboard/ComprasConcluidas";
 import HistoricoCompras from "./pages/dashboard/HistoricoCompras";
 import Configuracoes from "./pages/dashboard/Configuracoes";
+import Notificacoes from "./pages/dashboard/Notificacoes";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +56,7 @@ const App = () => (
             <Route path="/dashboard/compras-concluidas" element={<ComprasConcluidas />} />
             <Route path="/dashboard/historico-compras" element={<HistoricoCompras />} />
             <Route path="/dashboard/configuracoes" element={<Configuracoes />} />
+            <Route path="/dashboard/notificacoes" element={<Notificacoes />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
