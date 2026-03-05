@@ -6,7 +6,11 @@ import Footer from "@/components/Footer";
 import ListingCard from "@/components/ListingCard";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Smartphone, Car, Truck, Bike, Package, Search, MapPin, Flame, Clock, ArrowDownUp, Sofa } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Button } from "@/components/ui/button";
+import { Smartphone, Car, Truck, Bike, Package, Search, MapPin, Flame, Clock, ArrowDownUp, Sofa, Radar, LocateFixed, X } from "lucide-react";
+import { haversineDistance, geocodeCity } from "@/lib/geo";
+import { useToast } from "@/hooks/use-toast";
 
 const categories = [
   { name: "Celulares", icon: Smartphone, soon: false },
@@ -33,12 +37,46 @@ const Anuncios = () => {
   const [loading, setLoading] = useState(true);
   const [locationSearch, setLocationSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("recentes");
+  const { toast } = useToast();
+
+  // Radar state
+  const [radarActive, setRadarActive] = useState(false);
+  const [radarKm, setRadarKm] = useState(50);
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [geoLoading, setGeoLoading] = useState(false);
+
+  const handleActivateRadar = () => {
+    if (radarActive) {
+      setRadarActive(false);
+      setUserCoords(null);
+      return;
+    }
+    setGeoLoading(true);
+    if (!navigator.geolocation) {
+      toast({ title: "Geolocalização não suportada", description: "Seu navegador não suporta geolocalização.", variant: "destructive" });
+      setGeoLoading(false);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setRadarActive(true);
+        setGeoLoading(false);
+        toast({ title: "Radar ativado!", description: `Mostrando anúncios em até ${radarKm}km de você.` });
+      },
+      () => {
+        toast({ title: "Localização negada", description: "Permita o acesso à localização para usar o radar.", variant: "destructive" });
+        setGeoLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   useEffect(() => {
     const fetchListings = async () => {
       let query = supabase
         .from("anuncios")
-        .select("*, profiles!anuncios_vendedor_id_fkey(cidade, estado), lances(valor), anuncio_imagens(url, ordem)")
+        .select("*, profiles!anuncios_vendedor_id_fkey(cidade, estado, latitude, longitude), lances(valor), anuncio_imagens(url, ordem)")
         .eq("status", "ativo")
         .order("created_at", { ascending: false });
 
@@ -62,6 +100,8 @@ const Anuncios = () => {
           motivo_urgencia: a.motivo_urgencia,
           created_at: a.created_at,
           imagem_url: sortedImgs[0]?.url,
+          latitude: a.profiles?.latitude,
+          longitude: a.profiles?.longitude,
         };
       });
 
@@ -75,19 +115,25 @@ const Anuncios = () => {
   const filteredAndSorted = useMemo(() => {
     let result = [...listings];
 
-    // Filter by location
+    // Filter by location text
     if (locationSearch.trim()) {
       const search = locationSearch.toLowerCase().trim();
-      result = result.filter((l) =>
-        l.localizacao.toLowerCase().includes(search)
-      );
+      result = result.filter((l) => l.localizacao.toLowerCase().includes(search));
+    }
+
+    // Filter by radar distance
+    if (radarActive && userCoords) {
+      result = result.filter((l) => {
+        if (l.latitude == null || l.longitude == null) return false;
+        const dist = haversineDistance(userCoords.lat, userCoords.lng, l.latitude, l.longitude);
+        return dist <= radarKm;
+      });
     }
 
     // Sort
     switch (sortBy) {
       case "urgentes":
         result.sort((a, b) => {
-          // Items with motivo_urgencia come first, then by closest deadline
           const aUrgent = a.motivo_urgencia ? 0 : 1;
           const bUrgent = b.motivo_urgencia ? 0 : 1;
           if (aUrgent !== bUrgent) return aUrgent - bUrgent;
@@ -102,12 +148,11 @@ const Anuncios = () => {
         break;
       case "recentes":
       default:
-        // Already sorted by created_at desc from the query
         break;
     }
 
     return result;
-  }, [listings, locationSearch, sortBy]);
+  }, [listings, locationSearch, sortBy, radarActive, radarKm, userCoords]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -117,9 +162,54 @@ const Anuncios = () => {
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-2">Anúncios</h1>
           <p className="text-muted-foreground mb-8">Encontre a catira perfeita</p>
 
+          {/* Radar section */}
+          <div className="glass rounded-2xl p-4 md:p-5 mb-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Radar className={`w-5 h-5 ${radarActive ? "text-primary animate-pulse" : "text-muted-foreground"}`} />
+                <span className="font-semibold text-sm">Radar de Proximidade</span>
+              </div>
+              <Button
+                variant={radarActive ? "destructive" : "default"}
+                size="sm"
+                onClick={handleActivateRadar}
+                disabled={geoLoading}
+                className="gap-1.5"
+              >
+                {geoLoading ? (
+                  "Localizando..."
+                ) : radarActive ? (
+                  <><X className="w-3.5 h-3.5" /> Desativar</>
+                ) : (
+                  <><LocateFixed className="w-3.5 h-3.5" /> Ativar Radar</>
+                )}
+              </Button>
+            </div>
+
+            {radarActive && userCoords && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Raio de busca</span>
+                  <Badge variant="secondary" className="text-xs font-bold">{radarKm} km</Badge>
+                </div>
+                <Slider
+                  value={[radarKm]}
+                  onValueChange={([v]) => setRadarKm(v)}
+                  min={10}
+                  max={300}
+                  step={10}
+                />
+                <div className="flex justify-between text-[10px] text-muted-foreground">
+                  <span>10 km</span>
+                  <span>150 km</span>
+                  <span>300 km</span>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Filters row */}
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            {/* Location search */}
             <div className="relative flex-1 max-w-xs">
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
@@ -129,8 +219,6 @@ const Anuncios = () => {
                 onChange={(e) => setLocationSearch(e.target.value)}
               />
             </div>
-
-            {/* Sort options */}
             <div className="flex flex-wrap gap-2">
               {sortOptions.map(({ value, label, icon: Icon }) => (
                 <Badge
@@ -175,16 +263,18 @@ const Anuncios = () => {
             <div className="text-center py-20 text-muted-foreground">
               <Search className="w-10 h-10 mx-auto mb-3 opacity-50" />
               <p className="text-lg">Nenhum anúncio encontrado.</p>
+              {radarActive && (
+                <p className="text-sm mt-1">Tente aumentar o raio do radar ou desativá-lo.</p>
+              )}
               {locationSearch && (
-                <p className="text-sm mt-1">
-                  Tente limpar o filtro de localização.
-                </p>
+                <p className="text-sm mt-1">Tente limpar o filtro de localização.</p>
               )}
             </div>
           ) : (
             <>
               <p className="text-xs text-muted-foreground mb-4">
                 {filteredAndSorted.length} anúncio{filteredAndSorted.length !== 1 ? "s" : ""} encontrado{filteredAndSorted.length !== 1 ? "s" : ""}
+                {radarActive && ` em até ${radarKm}km`}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredAndSorted.map((listing) => (

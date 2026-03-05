@@ -6,8 +6,9 @@ import DashboardPageHeader from "@/components/DashboardPageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Settings } from "lucide-react";
+import { Settings, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { geocodeCity } from "@/lib/geo";
 
 const Configuracoes = () => {
   const { user } = useAuth();
@@ -18,12 +19,19 @@ const Configuracoes = () => {
   const [whatsapp, setWhatsapp] = useState("");
   const [cidade, setCidade] = useState("");
   const [estado, setEstado] = useState("");
+  const [hasCoords, setHasCoords] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     const fetch = async () => {
       const { data } = await supabase.from("profiles").select("*").eq("user_id", user.id).single();
-      if (data) { setNome(data.nome_completo); setWhatsapp(data.whatsapp); setCidade(data.cidade); setEstado(data.estado); }
+      if (data) {
+        setNome(data.nome_completo);
+        setWhatsapp(data.whatsapp);
+        setCidade(data.cidade);
+        setEstado(data.estado);
+        setHasCoords(data.latitude != null && data.longitude != null);
+      }
       setLoading(false);
     };
     fetch();
@@ -32,11 +40,32 @@ const Configuracoes = () => {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
+
+    // Geocode city/state
+    let latitude: number | null = null;
+    let longitude: number | null = null;
+    if (cidade.trim() && estado.trim()) {
+      const coords = await geocodeCity(cidade.trim(), estado.trim());
+      if (coords) {
+        latitude = coords.lat;
+        longitude = coords.lng;
+      }
+    }
+
     const { error } = await supabase.from("profiles").update({
-      nome_completo: nome.trim(), whatsapp: whatsapp.trim(), cidade: cidade.trim(), estado: estado.trim(),
+      nome_completo: nome.trim(),
+      whatsapp: whatsapp.trim(),
+      cidade: cidade.trim(),
+      estado: estado.trim(),
+      ...(latitude != null && { latitude, longitude }),
     }).eq("user_id", user.id);
-    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); }
-    else { toast({ title: "Perfil atualizado com sucesso!" }); }
+
+    if (error) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    } else {
+      setHasCoords(latitude != null);
+      toast({ title: "Perfil atualizado com sucesso!" });
+    }
     setSaving(false);
   };
 
@@ -66,6 +95,12 @@ const Configuracoes = () => {
               <Input value={estado} onChange={(e) => setEstado(e.target.value)} placeholder="SP" />
             </div>
           </div>
+          {!hasCoords && cidade && estado && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/30 rounded-lg p-3">
+              <MapPin className="w-4 h-4 shrink-0" />
+              <span>Salve para ativar sua localização no radar de anúncios.</span>
+            </div>
+          )}
           <Button onClick={handleSave} disabled={saving} className="w-full">
             {saving ? "Salvando..." : "Salvar Alterações"}
           </Button>
