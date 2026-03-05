@@ -8,7 +8,7 @@ import DashboardEmptyState from "@/components/DashboardEmptyState";
 import CountdownTimer from "@/components/CountdownTimer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Eye, DollarSign, TrendingUp, Gavel, XCircle, Megaphone } from "lucide-react";
+import { Plus, Eye, DollarSign, TrendingUp, Gavel, XCircle, Megaphone, Pencil, Trash2 } from "lucide-react";
 import { anuncioStatusConfig, formatCurrency } from "@/lib/statusConfig";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -24,41 +24,78 @@ const DashboardMeusAnuncios = () => {
 
   useEffect(() => {
     if (!user) return;
-    const fetch = async () => {
-      const { data } = await supabase
-        .from("anuncios")
-        .select("*, lances(valor, status)")
-        .eq("vendedor_id", user.id)
-        .order("created_at", { ascending: false });
-      setAnuncios(data ?? []);
-      setLoading(false);
+    const fetchAnuncios = async () => {
+      try {
+        const { data } = await supabase
+          .from("anuncios")
+          .select("*, lances(valor, status)")
+          .eq("vendedor_id", user.id)
+          .order("created_at", { ascending: false });
+        setAnuncios(data ?? []);
+      } catch (err) {
+        console.error("Erro ao buscar anúncios:", err);
+      } finally {
+        setLoading(false);
+      }
     };
-    fetch();
+    fetchAnuncios();
   }, [user]);
 
   const handleCancelAnuncio = async (anuncioId: string, titulo: string) => {
-    const { data: lances } = await supabase
-      .from("lances").select("comprador_id").eq("anuncio_id", anuncioId);
-    if (lances && lances.length > 0) {
-      const uniqueBidders = [...new Set(lances.map(l => l.comprador_id))];
-      await supabase.from("notificacoes").insert(
-        uniqueBidders.map(bidderId => ({
-          user_id: bidderId, titulo: "Anúncio cancelado",
-          mensagem: `O anúncio "${titulo}" foi cancelado pelo vendedor.`, tipo: "cancelamento",
-        }))
-      );
+    try {
+      const { data: lances } = await supabase
+        .from("lances").select("comprador_id").eq("anuncio_id", anuncioId);
+      if (lances && lances.length > 0) {
+        const uniqueBidders = [...new Set(lances.map(l => l.comprador_id))];
+        await supabase.from("notificacoes").insert(
+          uniqueBidders.map(bidderId => ({
+            user_id: bidderId, titulo: "Anúncio cancelado",
+            mensagem: `O anúncio "${titulo}" foi cancelado pelo vendedor.`, tipo: "cancelamento",
+          }))
+        );
+      }
+      const { error } = await supabase.from("anuncios").update({ status: "cancelado" as any }).eq("id", anuncioId);
+      if (error) { toast({ title: "Erro ao cancelar", description: error.message, variant: "destructive" }); return; }
+      toast({ title: "Anúncio cancelado", description: "Interessados foram notificados." });
+      setAnuncios(prev => prev.map(a => a.id === anuncioId ? { ...a, status: "cancelado" } : a));
+    } catch (err) {
+      console.error("Erro ao cancelar:", err);
+      toast({ title: "Erro inesperado", variant: "destructive" });
     }
-    const { error } = await supabase.from("anuncios").update({ status: "cancelado" as any }).eq("id", anuncioId);
-    if (error) { toast({ title: "Erro ao cancelar", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Anúncio cancelado", description: "Interessados foram notificados." });
-    setAnuncios(prev => prev.map(a => a.id === anuncioId ? { ...a, status: "cancelado" } : a));
+  };
+
+  const handleDeleteAnuncio = async (anuncioId: string) => {
+    try {
+      // Delete images from storage
+      const { data: imgs } = await supabase
+        .from("anuncio_imagens").select("url").eq("anuncio_id", anuncioId);
+      if (imgs && imgs.length > 0) {
+        const paths = imgs.map(img => {
+          try {
+            const url = new URL(img.url);
+            const parts = url.pathname.split("/storage/v1/object/public/anuncio-imagens/");
+            return parts[1] || "";
+          } catch { return ""; }
+        }).filter(Boolean);
+        if (paths.length > 0) await supabase.storage.from("anuncio-imagens").remove(paths);
+      }
+      await supabase.from("anuncio_imagens").delete().eq("anuncio_id", anuncioId);
+      await supabase.from("lances").delete().eq("anuncio_id", anuncioId);
+      const { error } = await supabase.from("anuncios").delete().eq("id", anuncioId);
+      if (error) { toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" }); return; }
+      toast({ title: "Anúncio excluído permanentemente" });
+      setAnuncios(prev => prev.filter(a => a.id !== anuncioId));
+    } catch (err) {
+      console.error("Erro ao excluir:", err);
+      toast({ title: "Erro inesperado", variant: "destructive" });
+    }
   };
 
   return (
     <DashboardLayout>
       <DashboardPageHeader
         title="Meus Anúncios"
-        description="Gerencie todos os seus anúncios ativos"
+        description="Gerencie todos os seus anúncios"
         icon={<Megaphone className="w-5 h-5 text-primary" />}
         actions={
           <Button asChild>
@@ -84,6 +121,7 @@ const DashboardMeusAnuncios = () => {
             const maxLance = a.lances?.length > 0 ? Math.max(...a.lances.map((l: any) => l.valor)) : null;
             const aceito = a.lances?.find((l: any) => l.status === "aceito");
             const st = anuncioStatusConfig[a.status] ?? anuncioStatusConfig.ativo;
+            const isActive = a.status === "ativo" || a.status === "aguardando_escolha";
 
             return (
               <div key={a.id} className="glass rounded-2xl p-5 md:p-6 card-hover">
@@ -104,11 +142,20 @@ const DashboardMeusAnuncios = () => {
                   </div>
                   <div className="text-right shrink-0 flex flex-col items-end gap-2">
                     <CountdownTimer endDate={new Date(a.data_fim)} compact stopped={!!aceito} />
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap justify-end">
                       <Button variant="outline" size="sm" asChild>
                         <Link to={`/anuncio/${a.id}`}><Eye className="w-3.5 h-3.5 mr-1" /> Ver</Link>
                       </Button>
-                      {a.status !== "finalizado" && a.status !== "cancelado" && (
+
+                      {/* Edit - only active */}
+                      {isActive && (
+                        <Button variant="outline" size="sm" asChild>
+                          <Link to={`/editar-anuncio/${a.id}`}><Pencil className="w-3.5 h-3.5 mr-1" /> Editar</Link>
+                        </Button>
+                      )}
+
+                      {/* Cancel - only active */}
+                      {isActive && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="outline" size="sm" className="border-destructive/30 text-destructive hover:bg-destructive/10">
@@ -123,6 +170,27 @@ const DashboardMeusAnuncios = () => {
                             <AlertDialogFooter>
                               <AlertDialogCancel>Voltar</AlertDialogCancel>
                               <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => handleCancelAnuncio(a.id, a.titulo)}>Sim, cancelar</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+
+                      {/* Delete permanently - finalized or cancelled */}
+                      {(a.status === "finalizado" || a.status === "cancelado") && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="border-destructive/30 text-destructive hover:bg-destructive/10">
+                              <Trash2 className="w-3.5 h-3.5 mr-1" /> Excluir
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir permanentemente?</AlertDialogTitle>
+                              <AlertDialogDescription>Este anúncio e todas as propostas serão removidos permanentemente.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Voltar</AlertDialogCancel>
+                              <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => handleDeleteAnuncio(a.id)}>Sim, excluir</AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
